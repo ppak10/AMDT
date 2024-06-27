@@ -1,6 +1,6 @@
-# Eagar-Tsai-GCode-Simulator
+![pytest](https://github.com/ppak10/amdt/workflows/pytest/badge.svg)
 
-Notebooks for testing out `pgcode` modules and with Eagar-Tsai simulations.
+# Additive Manufacturing Digital Twin (AMDT)
 
 ## Getting Started
 - Install local package with:
