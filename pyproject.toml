@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amdt"
+version = "0.0.1"
+authors = [
+  { name="Peter Pak", email="ppak10@gmail.com" },
+  { name="Francis Ogoke", email="oogoke@andrew.cmu.edu" },
+]
+description = "Additive Manufacturing"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/ppak10/amdt"
+Issues = "https://github.com/ppak10/amdt/issues"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+	"tests",
+]
