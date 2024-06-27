@@ -3,7 +3,8 @@ import math
 from pygcode import Line, words2dict, GCodeLinearMove
 from tqdm import tqdm
 
-class GCodeSegmenter():
+
+class GCodeSegmenter:
     """
     Class for loading and segmenting GCode.
     """
@@ -23,7 +24,7 @@ class GCodeSegmenter():
 
         # Range of gcode commands allowing for indexing of next command.
         gcode_commands_range = range(len(gcode_commands) - 2)
- 
+
         for gcode_command_index in gcode_commands_range:
             current_gcode_command = gcode_commands[gcode_command_index]
             next_gcode_command = gcode_commands[gcode_command_index + 1]
@@ -38,7 +39,7 @@ class GCodeSegmenter():
                 "travel": False,
             }
 
-            # Adds start of segment 
+            # Adds start of segment
             for key, value in current_gcode_command.items():
                 segment[key].append(value)
 
@@ -53,8 +54,8 @@ class GCodeSegmenter():
 
             # Calculates lateral distance between two points.
             segment["distance_xy"] = math.sqrt(
-                (segment["X"][1] - segment["X"][0])**2 +
-                (segment["Y"][1] - segment["Y"][0])**2
+                (segment["X"][1] - segment["X"][0]) ** 2
+                + (segment["Y"][1] - segment["Y"][0]) ** 2
             )
 
             # Determines angle to reach given is translated to origin.
@@ -91,7 +92,7 @@ class GCodeSegmenter():
         ],
         """
         self.gcode_layer_numbers = []
-        self.gcode_commands = [] # Resets stored gcode command
+        self.gcode_commands = []  # Resets stored gcode command
         current_command = {
             "X": 0.0,
             "Y": 0.0,
@@ -104,9 +105,9 @@ class GCodeSegmenter():
             # Open gcode file to begin parsing linear moves line by line.
             for line_text in tqdm(f.readlines()):
 
-                line = Line(line_text) # Parses raw gcode text to line instance.
+                line = Line(line_text)  # Parses raw gcode text to line instance.
 
-                gcodes = line.block.gcodes # GCode objects within line text.
+                gcodes = line.block.gcodes  # GCode objects within line text.
 
                 # Only considers Linear Move GCode actions for now.
                 if len(gcodes) and isinstance(gcodes[0], GCodeLinearMove):
@@ -115,20 +116,18 @@ class GCodeSegmenter():
                     # `{"Z": 5.0}` or `{"X": 1.0, "Y": 1.0}` or `{}`
                     coordinates_dict = gcodes[0].get_param_dict()
 
-                    # Indexes z coordinate commands as layer changes. 
+                    # Indexes z coordinate commands as layer changes.
                     if "Z" in coordinates_dict:
                         command_index = len(self.gcode_commands)
                         self.gcode_layer_change_indexes.append(command_index)
 
                     # Retrieves the corresponding extrusion value
-                    # `{"E": 2.10293}` or `{}` if no extrusion. 
+                    # `{"E": 2.10293}` or `{}` if no extrusion.
                     extrusion_dict = words2dict(line.block.modal_params)
 
                     # Updates extrusion value explicity to 0.0.
                     if "E" not in extrusion_dict:
-                        extrusion_dict = {
-                            "E": 0.0
-                        }
+                        extrusion_dict = {"E": 0.0}
 
                     # Overwrites the current command with commands gcode line.
                     current_command = {
@@ -136,8 +135,7 @@ class GCodeSegmenter():
                         **coordinates_dict,
                         **extrusion_dict,
                     }
-                    
-                    self.gcode_commands.append(current_command)
-        
-        return self.gcode_commands
 
+                    self.gcode_commands.append(current_command)
+
+        return self.gcode_commands
