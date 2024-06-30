@@ -36,7 +36,7 @@ def test_load_gcode_commands(gs):
     with pytest.raises(TypeError):
         gs.load_gcode_commands()
 
-    gcode_commands = gs.load_gcode_commands("tests/3DBenchy.gcode")
+    gcode_commands = gs.load_gcode_commands("example/3DBenchy.gcode")
     assert is_list_of(gcode_commands, dict)
     assert is_list_of(gs.gcode_commands, dict)
     assert is_list_of(gs.gcode_layer_numbers, int)

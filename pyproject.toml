@@ -26,5 +26,5 @@ Issues = "https://github.com/ppak10/amdt/issues"
 minversion = "6.0"
 addopts = "-ra -q"
 testpaths = [
-	"tests",
+	"test",
 ]

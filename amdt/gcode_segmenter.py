@@ -25,7 +25,7 @@ class GCodeSegmenter:
         # Range of gcode commands allowing for indexing of next command.
         gcode_commands_range = range(len(gcode_commands) - 2)
 
-        for gcode_command_index in gcode_commands_range:
+        for gcode_command_index in tqdm(gcode_commands_range):
             current_gcode_command = gcode_commands[gcode_command_index]
             next_gcode_command = gcode_commands[gcode_command_index + 1]
 
