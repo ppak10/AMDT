@@ -2,13 +2,17 @@ import numpy as np
 
 from amdt import EagarTsai
 
-bounds = {
-    "x": [-1000e-5, 1000e-5],
-    "y": [-1000e-5, 1000e-5],
-    "z": [-200e-6, 0],
+mesh = {
+    "b_c": "temp",
+    "x_min": -1000e-5,
+    "x_max": 1000e-5,
+    "y_min": -1000e-5,
+    "y_max": 1000e-5,
+    "z_min": -200e-6,
+    "z_max": 0,
 }
 
-et = EagarTsai(bc="temp", bounds=bounds, b=200e-6)
+et = EagarTsai(mesh=mesh)
 
 timestep = 1000e-6
 et.forward(timestep, 0)

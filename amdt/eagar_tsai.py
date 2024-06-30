@@ -57,8 +57,7 @@ class EagarTsai:
 
         # Thermal Diffusivity
         self.D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
-
-        self.sigma = self.build["beam_diameter"] / 4  # 13.75e-6
+        print(self.build)
 
         ########
         # Mesh #
@@ -116,11 +115,12 @@ class EagarTsai:
         xp = -self.build["velocity"] * x * np.cos(phi)
         yp = -self.build["velocity"] * x * np.sin(phi)
 
+        sigma = self.build["beam_diameter"] / 4  # 13.75e-6
         lmbda = np.sqrt(4 * self.D * x)
-        gamma = np.sqrt(2 * self.sigma**2 + lmbda**2)
+        gamma = np.sqrt(2 * sigma**2 + lmbda**2)
         start = (4 * self.D * x) ** (-3 / 2)
 
-        termy = self.sigma * lmbda * np.sqrt(2 * np.pi) / (gamma)
+        termy = sigma * lmbda * np.sqrt(2 * np.pi) / (gamma)
         yexp1 = np.exp(-1 * ((y_coord - yp) ** 2) / gamma**2)
         termx = termy
         xexp1 = np.exp(-1 * ((x_coord - xp) ** 2) / gamma**2)
@@ -135,6 +135,7 @@ class EagarTsai:
         """
         Adapted from `Solutions.solve()` and `_altsolve()` helper function.
         """
+        sigma = self.build["beam_diameter"] / 4  # 13.75e-6
         coeff = (
             P
             * self.material["alpha"]
@@ -143,7 +144,7 @@ class EagarTsai:
                 * np.pi
                 * self.material["rho"]
                 * self.material["c_p"]
-                * (self.sigma**2)
+                * sigma**2
                 * np.pi ** (3 / 2)
             )
         )
