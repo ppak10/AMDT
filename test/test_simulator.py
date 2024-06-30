@@ -1,11 +1,30 @@
 import pytest
 
 from amdt import Simulator
+from cerberus import Validator
+
+segment_validator = Validator(
+    {
+        "X": {"type": "list"},
+        "Y": {"type": "list"},
+        "Z": {"type": "list"},
+        "E": {"type": "list"},
+        "angle_xy": {"type": "float"},
+        "distance_xy": {"type": "float"},
+        "travel": {"type": "boolean"},
+    }
+)
 
 
 @pytest.fixture(scope="module")
 def s():
     return Simulator()
+
+
+def is_list_of(value, item_type):
+    if not isinstance(value, list):
+        return False
+    return all(isinstance(item, item_type) for item in value)
 
 
 def test_init(s):
