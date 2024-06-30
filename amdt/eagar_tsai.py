@@ -50,9 +50,6 @@ class EagarTsai:
         #########
         self.build = load_config_file("build", build_config_file, build)
 
-        # Preheat Temperature
-        self.build["t_0"] = 300
-
         ############
         # Material #
         ############
