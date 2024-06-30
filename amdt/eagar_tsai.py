@@ -13,12 +13,6 @@ dir_path = Path(__file__).parent
 
 
 def load_config_file(config_dir, config_file, config_override):
-    print(
-        config_dir,
-        config_file,
-        config_override,
-        os.path.join(dir_path, config_dir, config_file),
-    )
     config = configparser.ConfigParser()
     config.read(os.path.join(dir_path, config_dir, config_file))
     output = {}
