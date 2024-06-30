@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "amdt"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Peter Pak", email="ppak10@gmail.com" },
   { name="Francis Ogoke", email="oogoke@andrew.cmu.edu" },
 ]
-description = "Additive Manufacturing"
+description = "Additive Manufacturing Digital Twin"
 readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
