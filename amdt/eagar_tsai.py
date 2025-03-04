@@ -125,18 +125,23 @@ class EagarTsai:
         lmbda = np.sqrt(4 * D * x)
         gamma = np.sqrt(2 * sigma**2 + lmbda**2)
         start = (4 * D * x) ** (-3 / 2)
-        # print(x)
-        # print(f"start {start}")
 
+        # Wolfer et al. Equation A.3
         termy = sigma * lmbda * np.sqrt(2 * np.pi) / (gamma)
         yexp1 = np.exp(-1 * ((y_coord - yp) ** 2) / gamma**2)
+        yintegral = termy * (yexp1)
+
+        # Wolfer et al. Equation A.2
         termx = termy
         xexp1 = np.exp(-1 * ((x_coord - xp) ** 2) / gamma**2)
-        yintegral = termy * (yexp1)
         xintegral = termx * xexp1
 
+        # Wolfer et al. Equation 18
         zintegral = 2 * np.exp(-(z_coord**2) / (4 * D * x))
+
+        # Wolfer et al. Equation 16
         value = coeff * start * xintegral * yintegral * zintegral
+
         return value
 
     def solve(self, dt, phi, P):
@@ -146,7 +151,7 @@ class EagarTsai:
         sigma = self.build["beam_diameter"] / 4  # 13.75e-6
         coeff = (
             P
-            * self.material["alpha"]
+            * self.material["absorptivity"]
             / (
                 2
                 * np.pi
