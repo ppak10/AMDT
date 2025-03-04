@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "amdt"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Peter Pak", email="ppak10@gmail.com" },
   { name="Francis Ogoke", email="oogoke@andrew.cmu.edu" },
 ]
 description = "Additive Manufacturing Digital Twin"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -28,3 +28,8 @@ addopts = "-ra -q"
 testpaths = [
 	"test",
 ]
+
+
+[tool.black]
+line-length = 88          # Set max line length
+target-version = ['py310'] # Target specific Python version

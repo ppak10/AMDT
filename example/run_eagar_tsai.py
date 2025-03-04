@@ -12,6 +12,7 @@ mesh = {
     "z_max": 0,
 }
 
+
 et = EagarTsai(mesh=mesh)
 
 timestep = 1000e-6

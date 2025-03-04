@@ -49,6 +49,7 @@ class EagarTsai:
         # Build #
         #########
         self.build = load_config_file("build", build_config_file, build)
+        print(self.build)
 
         ############
         # Material #
@@ -57,7 +58,6 @@ class EagarTsai:
 
         # Thermal Diffusivity
         self.D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
-        print(self.build)
 
         ########
         # Mesh #
@@ -108,6 +108,7 @@ class EagarTsai:
         self.time += dt
 
     def freefunc(self, x, coeff, xs, ys, phi):
+        # print(f"self.D {self.D}")
         x_coord = xs[:, None, None, None]
         y_coord = ys[None, :, None, None]
         z_coord = self.zs[None, None, :, None]
@@ -119,6 +120,8 @@ class EagarTsai:
         lmbda = np.sqrt(4 * self.D * x)
         gamma = np.sqrt(2 * sigma**2 + lmbda**2)
         start = (4 * self.D * x) ** (-3 / 2)
+        # print(x)
+        # print(f"start {start}")
 
         termy = sigma * lmbda * np.sqrt(2 * np.pi) / (gamma)
         yexp1 = np.exp(-1 * ((y_coord - yp) ** 2) / gamma**2)
@@ -313,7 +316,7 @@ class EagarTsai:
         #  breakpoint()
         if not np.array(self.theta[:, :, -1] > self.material["t_melt"]).any():
             print(
-                f"Energy Density too low to melt material, melting temperature: {self.material["t_melt"]} K, max temperature: {np.max(self.theta[:,:,-1])} K"
+                f"Energy Density too low to melt material, melting temperature: {self.material['t_melt']} K, max temperature: {np.max(self.theta[:,:,-1])} K"
             )
             prop_l = 0
             prop_w = 0
