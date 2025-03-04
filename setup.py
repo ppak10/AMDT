@@ -6,4 +6,9 @@ setup(
     version="0.0.3",
     # Loads in local packages
     packages=find_packages(),
+    package_data={
+        "amdt": [
+            "data/**/*.ini",
+        ]
+    },
 )

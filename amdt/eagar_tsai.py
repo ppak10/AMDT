@@ -4,17 +4,19 @@ import matplotlib.ticker as ticker
 import numpy as np
 import os
 
+from amdt import data
+from importlib.resources import files
 from pathlib import Path
 from scipy.ndimage import gaussian_filter
 from scipy import integrate, interpolate, optimize
 from skimage import measure
 
-dir_path = Path(__file__).parent
-
 
 def load_config_file(config_dir, config_file, config_override):
     config = configparser.ConfigParser()
-    config.read(os.path.join(dir_path, config_dir, config_file))
+    config_file_path = os.path.join(config_dir, config_file)
+    config_resource = files(data).joinpath(config_file_path)
+    config.read(config_resource)
     output = {}
 
     for section in config.sections():
@@ -40,24 +42,25 @@ class EagarTsai:
         self,
         mesh_config_file="scale_millimeter.ini",
         mesh={},
-        build_config_file="nominal.ini",
+        build_config_file="default.ini",
         build={},
         material_config_file="SS316L.ini",
         material={},
+        verbose=False,
     ):
         #########
         # Build #
         #########
         self.build = load_config_file("build", build_config_file, build)
-        print(self.build)
+        if verbose:
+            print(self.build)
 
         ############
         # Material #
         ############
         self.material = load_config_file("material", material_config_file, material)
-
-        # Thermal Diffusivity
-        self.D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
+        if verbose:
+            print(self.material)
 
         ########
         # Mesh #
@@ -108,7 +111,6 @@ class EagarTsai:
         self.time += dt
 
     def freefunc(self, x, coeff, xs, ys, phi):
-        # print(f"self.D {self.D}")
         x_coord = xs[:, None, None, None]
         y_coord = ys[None, :, None, None]
         z_coord = self.zs[None, None, :, None]
@@ -116,10 +118,13 @@ class EagarTsai:
         xp = -self.build["velocity"] * x * np.cos(phi)
         yp = -self.build["velocity"] * x * np.sin(phi)
 
+        # Thermal Diffusivity (Wolfer et al. Equation 1)
+        D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
+
         sigma = self.build["beam_diameter"] / 4  # 13.75e-6
-        lmbda = np.sqrt(4 * self.D * x)
+        lmbda = np.sqrt(4 * D * x)
         gamma = np.sqrt(2 * sigma**2 + lmbda**2)
-        start = (4 * self.D * x) ** (-3 / 2)
+        start = (4 * D * x) ** (-3 / 2)
         # print(x)
         # print(f"start {start}")
 
@@ -130,7 +135,7 @@ class EagarTsai:
         yintegral = termy * (yexp1)
         xintegral = termx * xexp1
 
-        zintegral = 2 * np.exp(-(z_coord**2) / (4 * self.D * x))
+        zintegral = 2 * np.exp(-(z_coord**2) / (4 * D * x))
         value = coeff * start * xintegral * yintegral * zintegral
         return value
 
@@ -191,7 +196,10 @@ class EagarTsai:
         self.visitedy.append(self.location_idx[1])
 
     def diffuse(self, dt):
-        diffuse_sigma = np.sqrt(2 * self.D * dt)
+        # Thermal Diffusivity (Wolfer et al. Equation 1)
+        D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
+
+        diffuse_sigma = np.sqrt(2 * D * dt)
 
         if dt < 0:
             breakpoint()
