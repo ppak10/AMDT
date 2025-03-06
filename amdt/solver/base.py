@@ -71,7 +71,7 @@ class SolverBase:
         self.location_idx = [
             np.argmin(np.abs(self.xs - self.location[0])),
             np.argmin(np.abs(self.ys - self.location[1])),
-            # np.argmin(np.abs(self.zs - self.location[2])),
+            np.argmin(np.abs(self.zs - self.location[2])),
         ]
 
         self.theta = (
@@ -138,7 +138,11 @@ class SolverBase:
 
         match model:
             case "eagar-tsai":
-                theta = self.eagar_tsai(parameter_args, state_args)
+                theta = self.eagar_tsai(parameter_args)
+                # self.theta = theta
+            case "rosenthal":
+                theta = self.rosenthal(parameter_args)
+                # self.theta = theta
             case _:
                 print(f"'{model}' model not found")
 
