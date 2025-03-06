@@ -1,6 +1,6 @@
 import numpy as np
 
-from amdt.solver.types import SolverForwardParameters, SolverForwardState
+from amdt.solver.types import SolverForwardParameters
 
 from scipy import integrate
 
@@ -101,14 +101,6 @@ class SolverModels:
             / (2 * np.pi * parameters["k"])
         )
 
-        # TODO: Implement time evolution properly.
-        # May not be as visible for smaller lengths of dt however, for longer
-        # dt it will show up as less heat.
-
-        # One way to solve this is to make a consistent dt in the gcode segments
-        # Thus avoid this issue entirely as the dt provided by the segments is
-        # the same everywhere and all are added consistently to theta.
-
         # Velocity components
         vx = parameters["velocity"] * np.cos(parameters["phi"])
         vy = parameters["velocity"] * np.sin(parameters["phi"])
@@ -116,6 +108,14 @@ class SolverModels:
         # Rotate the frame by phi
         X_rot = X * np.cos(parameters["phi"]) + Y * np.sin(parameters["phi"])
         Y_rot = -X * np.sin(parameters["phi"]) + Y * np.cos(parameters["phi"])
+
+        # TODO: Implement time evolution properly.
+        # May not be as visible for smaller lengths of dt however, for longer
+        # dt it will show up as less heat.
+
+        # One way to solve this is to make a consistent dt in the gcode segments
+        # Thus avoid this issue entirely as the dt provided by the segments is
+        # the same everywhere and all are added consistently to theta.
 
         for t in np.linspace(0, parameters["dt"], num=1):
             # In the moving frame, shift the coordinates relative to the heat source
@@ -131,15 +131,15 @@ class SolverModels:
             R = np.sqrt(zeta**2 + r**2)
 
             # Rosenthal temperature contribution
-            temp_rise = (coefficient / R) * np.exp(
+            # `notes/rosenthal/#shape_of_temperature_field``
+            temp = (coefficient / R) * np.exp(
                 (parameters["velocity"] * (zeta - R)) / (2 * D)
             )
 
-            temp = np.minimum(temp_rise, 1673)
+            temp = np.minimum(temp, parameters["t_liquidus"])
 
-            # Mask temperatures close to background.
-            # temp[temp < 500] = 0
-            temp[temp < 1673] = 0
+            # Mask temperatures close to background to prevent "long tail"
+            temp[temp < parameters["t_solidus"]] = 0
 
             # Add contribution to the temperature field
             theta += temp

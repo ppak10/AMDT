@@ -110,6 +110,8 @@ class SolverBase:
             "power": self.build["power"],
             "rho": self.material["rho"],
             "t_0": self.build["t_0"],
+            "t_liquidus": self.material["t_liquidus"],
+            "t_solidus": self.material["t_solidus"],
             "velocity": self.build["velocity"],
             "xs": self.xs,
             "ys": self.ys,
@@ -139,10 +141,8 @@ class SolverBase:
         match model:
             case "eagar-tsai":
                 theta = self.eagar_tsai(parameter_args)
-                # self.theta = theta
             case "rosenthal":
                 theta = self.rosenthal(parameter_args)
-                # self.theta = theta
             case _:
                 print(f"'{model}' model not found")
 
