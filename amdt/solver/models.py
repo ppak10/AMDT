@@ -92,26 +92,14 @@ class SolverModels:
         zs = parameters["zs"]
 
         X, Y, Z = np.meshgrid(xs, ys, zs, indexing="ij")
-        # print(X.shape, Y.shape, Z.shape)
 
         theta = np.ones((len(xs), len(ys), len(zs))) * parameters["t_0"]
-        # print(theta.shape)
-
-        # x_coord = xs[:, None, None, None]
-        # y_coord = ys[None, :, None, None]
-        # z_coord = zs[None, None, :, None]
 
         coefficient = (
             parameters["absorptivity"]  # A
             * parameters["power"]  # P
             / (2 * np.pi * parameters["k"])
         )
-
-        # Velocity components
-        # vx = parameters["velocity"] * np.cos(parameters["phi"])
-        # vy = parameters["velocity"] * np.sin(parameters["phi"])
-
-        # print(f"theta.shape {theta.shape}")
 
         # TODO: Implement time evolution properly.
         # May not be as visible for smaller lengths of dt however, for longer
@@ -134,28 +122,18 @@ class SolverModels:
             x_rel = X_rot + vx * t
             y_rel = Y_rot + vy * t
 
-            # print(f"x_rel {x_rel.shape}")
-            # print(f"y_rel {y_rel.shape}")
-
-            # Euclidean distance R = sqrt(x^2 + y^2 + z^2) in the moving frame
-            # R = np.sqrt(x_rel**2 + y_rel**2 + z_coord**2)
-
             # Assuming x is along the weld center line
             zeta = -x_rel
-            # zeta = -X
 
             # r is the cylindrical radius composed of y and z
             r = np.sqrt(y_rel**2 + Z**2)
-            # r = np.sqrt(Y**2 + Z**2)
 
             R = np.sqrt(zeta**2 + r**2)
 
-            # Rosenthal temperature contribution (no need to update xp, yp)
-            # temp_rise = (coefficient / R) * np.exp(-(vx * x_rel + vy * y_rel) / (2 * D))
+            # Rosenthal temperature contribution
             temp_rise = (coefficient / R) * np.exp(
                 (parameters["velocity"] * (zeta - R)) / (2 * D)
             )
-            # print(temp_rise.shape)
 
             temp = np.minimum(temp_rise, 1673)
 
@@ -167,55 +145,3 @@ class SolverModels:
             theta += temp
 
         return theta
-
-    # @staticmethod
-    # def rosenthal(parameters: SolverForwardParameters):
-    #     """
-    #     Provides next state for rosenthal modeling
-    #     """
-
-    #     # Coefficient for Equation 16 in Wolfer et al.
-    #     coefficient = (
-    #         parameters["absorptivity"]  # A
-    #         * parameters["power"]  # P
-    #         / (
-    #             2 * np.pi * parameters["k"]
-    #         )
-    #     )
-
-    #     # Centering, not sure exactly why its like this.
-    #     xs = parameters["xs"] - parameters["xs"][len(parameters["xs"]) // 2]
-    #     ys = parameters["ys"] - parameters["ys"][len(parameters["ys"]) // 2]
-    #     zs = parameters["zs"]
-
-    #     # Thermal Diffusivity (Wolfer et al. Equation 1)
-    #     D = parameters["k"] / (parameters["rho"] * parameters["c_p"])
-
-    #     theta = np.ones((len(xs), len(ys), len(parameters["zs"]))) * parameters["t_0"]
-
-    #     x_coord = xs[:, None, None, None]
-    #     y_coord = ys[None, :, None, None]
-    #     z_coord = zs[None, None, :, None]
-
-    #     # Velocity components
-    #     vx = parameters["velocity"] * np.cos(parameters["phi"])
-    #     vy = parameters["velocity"] * np.sin(parameters["phi"])
-
-    #     # Time evolution
-    #     for t in np.linspace(0, parameters["dt"], num=75):
-    #         # Moving heat source position
-    #         xp = -vx * t
-    #         yp = -vy * t
-
-    #         # Euclidean distance R = sqrt(x^2 + y^2 + z^2)
-    #         R = np.sqrt((x_coord - xp) ** 2 + (y_coord - yp) ** 2 + z_coord ** 2)
-
-    #         # Rosenthal temperature contribution
-    #         temp_rise = coefficient / R * np.exp(-(vx * (x_coord - xp) + vy * (y_coord - yp)) / (2 * D))
-    #         print(temp_rise)
-
-    #         # Add contribution to the temperature field
-    #         theta += np.squeeze(temp_rise)
-    #     # print(theta)
-
-    #     return theta
