@@ -74,15 +74,26 @@ class SolverModels:
 
             return value
 
-        integration = integrate.fixed_quad(integral, START, parameters["dt"], n=75)
+        dt = parameters["dt"]
+
+        # TODO: Fix 75 magic number
+        # Splits prescribed delta time into into minimum increments of 10**-4 s.
+        num = max(1, int(dt // 10**-4))
+
+        integration = integrate.fixed_quad(integral, START, dt, n=num)
 
         return theta + integration[0]
 
-    @staticmethod
-    def rosenthal(parameters: SolverForwardParameters):
+    # @staticmethod
+    def rosenthal(self, parameters: SolverForwardParameters):
         """
         Provides next state for rosenthal modeling
         """
+        alpha = parameters["absorptivity"]
+        dt = parameters["dt"]
+        phi = parameters["phi"]
+        power = parameters["power"]
+
         # Thermal Diffusivity (Wolfer et al. Equation 1)
         D = parameters["k"] / (parameters["rho"] * parameters["c_p"])
 
@@ -95,47 +106,49 @@ class SolverModels:
 
         theta = np.ones((len(xs), len(ys), len(zs))) * parameters["t_0"]
 
-        coefficient = (
-            parameters["absorptivity"]  # A
-            * parameters["power"]  # P
-            / (2 * np.pi * parameters["k"])
-        )
+        coefficient = alpha * power / (2 * np.pi * parameters["k"])
 
-        # Velocity components
-        vx = parameters["velocity"] * np.cos(parameters["phi"])
-        vy = parameters["velocity"] * np.sin(parameters["phi"])
+        # Splits prescribed delta time into into minimum increments of 10**-4 s.
+        num = max(1, int(dt // 10**-4))
+        # num = 1
 
-        # Rotate the frame by phi
-        X_rot = X * np.cos(parameters["phi"]) + Y * np.sin(parameters["phi"])
-        Y_rot = -X * np.sin(parameters["phi"]) + Y * np.cos(parameters["phi"])
-
-        # TODO: Implement time evolution properly.
-        # May not be as visible for smaller lengths of dt however, for longer
-        # dt it will show up as less heat.
-
-        # One way to solve this is to make a consistent dt in the gcode segments
-        # Thus avoid this issue entirely as the dt provided by the segments is
-        # the same everywhere and all are added consistently to theta.
-
-        for t in np.linspace(0, parameters["dt"], num=1):
-            # In the moving frame, shift the coordinates relative to the heat source
-            x_rel = X_rot + vx * t
-            y_rel = Y_rot + vy * t
+        # TODO: Look into incorporating the diffusion within the segment.
+        # For longer segments, since no heat diffusion is applied, it seems like
+        # its a long segment of instantenously heated material.
+        # prev_theta = theta
+        for t in np.linspace(0, dt, num=num):
+            # Adds in the expected distance traveled along global x and y axes.
+            xp = -parameters["velocity"] * t * np.cos(phi)
+            yp = -parameters["velocity"] * t * np.sin(phi)
 
             # Assuming x is along the weld center line
-            zeta = -x_rel
+            zeta = -(X -xp)
 
             # r is the cylindrical radius composed of y and z
-            r = np.sqrt(y_rel**2 + Z**2)
+            r = np.sqrt((Y - yp)**2 + Z**2)
 
-            R = np.sqrt(zeta**2 + r**2)
+            # Rotate the reference frame for Rosenthal by phi
+            # Counterclockwise
+            # https://en.wikipedia.org/wiki/Rotation_matrix#In_two_dimensions
+            if phi > 0:
+                zeta_rot = zeta * np.cos(phi) - r * np.sin(phi)
+                r_rot = zeta * np.sin(phi) + r * np.cos(phi)
+
+            # Clockwise
+            # https://en.wikipedia.org/wiki/Rotation_matrix#Direction
+            else:
+                zeta_rot = zeta * np.cos(phi) + r * np.sin(phi)
+                r_rot = -zeta * np.sin(phi) + r * np.cos(phi)
+
+            R = np.sqrt(zeta_rot**2 + r_rot**2)
 
             # Rosenthal temperature contribution
             # `notes/rosenthal/#shape_of_temperature_field``
             temp = (coefficient / R) * np.exp(
-                (parameters["velocity"] * (zeta - R)) / (2 * D)
+                (parameters["velocity"] * (zeta_rot - R)) / (2 * D)
             )
 
+            # Prevents showing temperatures above liquidus
             temp = np.minimum(temp, parameters["t_liquidus"])
 
             # Mask temperatures close to background to prevent "long tail"
@@ -143,5 +156,13 @@ class SolverModels:
 
             # Add contribution to the temperature field
             theta += temp
+
+            # diffuse theta
+            # self.theta = self.diffuse(t, theta)
+
+            # prev_theta_diffused = self.diffuse(t, prev_theta)
+            # theta = self.graft(t, phi, theta, prev_theta_diffused)
+            # theta = prev_theta_diffused
+            # prev_theta = theta
 
         return theta

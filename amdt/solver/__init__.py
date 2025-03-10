@@ -1,9 +1,15 @@
 from .base import SolverBase
+from .heat_diffusion import SolverHeatDiffusion
 from .models import SolverModels
 from .utils import SolverUtils
 
 
-class Solver(SolverBase, SolverModels, SolverUtils):
+class Solver(
+    SolverBase,
+    SolverHeatDiffusion,
+    SolverModels,
+    SolverUtils
+):
     def __init__(
         self,
         build_config_file="default.ini",

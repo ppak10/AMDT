@@ -4,8 +4,6 @@ from amdt.solver.utils import SolverUtils
 from amdt.solver.types import SolverForwardParameters, SolverForwardState
 
 from pprint import pprint
-from scipy.ndimage import gaussian_filter
-
 
 class SolverBase:
     """
@@ -24,6 +22,12 @@ class SolverBase:
         **kwargs,
     ):
         self.verbose = verbose
+
+        # TODO: Change the config imports (and arg) for `build`, `material`, and
+        # `mesh` to accept their specific parameters.
+        # i.e. Solver(power = 200) instead of Solver(build = {"power": 200})
+        # This makes it more clear and easier to adjust specific parameters
+        # later.
 
         #########
         # Build #
@@ -141,93 +145,38 @@ class SolverBase:
         match model:
             case "eagar-tsai":
                 theta = self.eagar_tsai(parameter_args)
+                self.theta = self.diffuse(parameter_args["dt"])
+                self.theta = self.graft(parameter_args["dt"], parameter_args["phi"], theta)
             case "rosenthal":
                 theta = self.rosenthal(parameter_args)
+                self.theta = self.diffuse(parameter_args["dt"])
+                self.theta = self.graft(parameter_args["dt"], parameter_args["phi"], theta)
             case _:
                 print(f"'{model}' model not found")
 
-        self.diffuse(parameter_args["dt"])
-        self.graft(parameter_args["dt"], parameter_args["phi"], theta)
-        # print(self.theta)
-
-    # TODO: Move to its own class
-    def diffuse(self, dt):
-        # Thermal Diffusivity (Wolfer et al. Equation 1)
-        D = self.material["k"] / (self.material["rho"] * self.material["c_p"])
-
-        diffuse_sigma = np.sqrt(2 * D * dt)
-
-        if dt < 0:
-            breakpoint()
-
-        # not sure which `self.mesh["step"]` should fit here
-        padsize = int((4 * diffuse_sigma) // (self.mesh["z_step"] * 2))
-
-        if padsize == 0:
-            padsize = 1
-
-        theta_pad = (
-            np.pad(
-                self.theta,
-                ((padsize, padsize), (padsize, padsize), (padsize, padsize)),
-                mode="reflect",
-            )
-            - 300
-        )
-
-        theta_pad_flip = np.copy(theta_pad)
-
-        if self.mesh["b_c"] == "temp":
-            theta_pad_flip[-padsize:, :, :] = -theta_pad[-padsize:, :, :]
-            theta_pad_flip[:padsize, :, :] = -theta_pad[:padsize, :, :]
-            theta_pad_flip[:, -padsize:, :] = -theta_pad[:, -padsize:, :]
-            theta_pad_flip[:, :padsize, :] = -theta_pad[:, :padsize, :]
-
-        if self.mesh["b_c"] == "flux":
-            theta_pad_flip[-padsize:, :, :] = theta_pad[-padsize:, :, :]
-            theta_pad_flip[:padsize, :, :] = theta_pad[:padsize, :, :]
-            theta_pad_flip[:, -padsize:, :] = theta_pad[:, -padsize:, :]
-            theta_pad_flip[:, :padsize, :] = theta_pad[:, :padsize, :]
-
-        theta_pad_flip[:, :, :padsize] = -theta_pad[:, :, :padsize]
-        theta_pad_flip[:, :, -padsize:] = theta_pad[:, :, -padsize:]
-
-        # not sure which `self.mesh["step"]` should fit here
-        theta_diffuse = (
-            gaussian_filter(theta_pad_flip, sigma=diffuse_sigma / self.mesh["z_step"])[
-                padsize:-padsize, padsize:-padsize, padsize:-padsize
-            ]
-            + 300
-        )
-
-        self.theta = theta_diffuse
-        return theta_diffuse
-
     # TODO: Move to its own class.
-    def graft(self, dt, phi, theta):
-        l = self.build["velocity"] * dt
-        l_new_x = int(
-            np.rint(self.build["velocity"] * dt * np.cos(phi) / self.mesh["x_step"])
-        )
-        l_new_y = int(
-            np.rint(self.build["velocity"] * dt * np.sin(phi) / self.mesh["y_step"])
-        )
-        y = len(self.ys) // 2
+    def graft(self, dt, phi, theta, prev_theta = None):
 
-        y_offset = len(self.ys) // 2
-        x_offset = len(self.xs) // 2
+        if prev_theta is None:
+            prev_theta = self.theta
 
-        x_roll = -(x_offset) + self.location_idx[0] + l_new_x
-        y_roll = -(y_offset) + self.location_idx[1] + l_new_y
+        expected_travel_distance = self.build["velocity"] * dt
 
-        self.theta += np.roll(theta, (x_roll, y_roll, 0), axis=(0, 1, 2)) - 300
+        x = int(np.rint(expected_travel_distance * np.cos(phi) / self.mesh["x_step"]))
+        y = int(np.rint(expected_travel_distance * np.sin(phi) / self.mesh["y_step"]))
 
-        if self.theta.shape == (0, 0, 0):
-            breakpoint()
+        x_offset, y_offset = len(self.xs) // 2, len(self.ys) // 2
 
-        self.location[0] += l * (np.cos(phi))
-        self.location[1] += l * (np.sin(phi))
-        self.location_idx[0] += int(np.rint(l * np.cos(phi) / self.mesh["x_step"]))
-        self.location_idx[1] += int(np.rint(l * np.sin(phi) / self.mesh["y_step"]))
+        x_roll = -(x_offset) + self.location_idx[0] + x
+        y_roll = -(y_offset) + self.location_idx[1] + y
+
+        prev_theta += np.roll(theta, (x_roll, y_roll, 0), axis=(0, 1, 2)) - self.build["t_0"]
+
+        self.location[0] += expected_travel_distance * (np.cos(phi))
+        self.location[1] += expected_travel_distance * (np.sin(phi))
+        self.location_idx[0] += int(np.rint(expected_travel_distance * np.cos(phi) / self.mesh["x_step"]))
+        self.location_idx[1] += int(np.rint(expected_travel_distance * np.sin(phi) / self.mesh["y_step"]))
+
+        return prev_theta
         # self.visitedx.append(self.location_idx[0])
         # self.visitedy.append(self.location_idx[1])
