@@ -1,7 +1,6 @@
-from .simulator import Simulator
+from .portfolio import Portfolio
+from .workspace import Workspace
 
-from .gcode_segmenter import GCodeSegmenter
-
-from .eagar_tsai import EagarTsai
-
+# Workspace tools
+from .segmenter import Segmenter
 from .solver import Solver
