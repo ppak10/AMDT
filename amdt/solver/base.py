@@ -1,5 +1,7 @@
 import torch
 
+from datetime import datetime
+
 class SolverBase:
     """
     Base file for Solver class.
@@ -8,6 +10,8 @@ class SolverBase:
     def __init__(
         self,
         model,
+        name=None,
+        filename=None,
         build_config_file="default.ini",
         material_config_file="SS316L.ini",
         mesh_config_file="scale_millimeter.ini",
@@ -19,6 +23,7 @@ class SolverBase:
         # This may help with reducing size and computational cost.
         **kwargs,
     ):
+        self.set_name(name, filename)
         self.device = device
         self.dtype = dtype
         self.verbose = verbose
@@ -87,7 +92,27 @@ class SolverBase:
         super().__init__()
         # super().__init__(**kwargs)
 
-    def forward(self, segment, model="eagar-tsai"):
+    def set_name(self, name = None, filename = None):
+        """
+        Sets the `name` and `filename` values of the class.
+
+        @param name: Name of segmenter 
+        @param filename: `filename` override of segmenter (no spaces)
+        """
+        # Sets `name` to approximate timestamp.
+        if name is None:
+            self.name = datetime.now().strftime("%Y%m%d_%H%M%S")
+        else:
+            self.name = name
+
+        # Autogenerates `filename` from `name` if not provided.
+        if filename == None:
+            self.filename = self.name.replace(" ", "_")
+        else:
+            self.filename = filename
+
+
+    def forward(self, segment):
 
         dt = segment["distance_xy"] / self.velocity
         phi = segment["angle_xy"]

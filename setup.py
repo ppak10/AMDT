@@ -9,7 +9,7 @@ setup(
     include_package_data=True,
     package_data={
         "amdt": [
-            "data/**/*.ini",
+            "data/**/*",
         ]
     },
     entry_points={

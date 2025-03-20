@@ -40,7 +40,7 @@ class SegmenterGCode:
         }
 
         if gcode_filepath in PARTS:
-            gcode_filepath = files(data).joinpath("part", f"{gcode_filepath}.gcode")
+            gcode_filepath = files(data).joinpath("segmenter", "part", f"{gcode_filepath}.gcode")
 
         with open(gcode_filepath, "r") as f:
 
@@ -95,64 +95,10 @@ class SegmenterGCode:
         command_end_index = self.gcode_layer_change_indexes[end_index]
         return self.gcode_commands[command_start_index:command_end_index]
 
-    def convert_gcode_commands_to_segments_old(self, gcode_commands):
-        """
-        Parses list of gcode commands to segments of x, y, z, and e since
-        plotting all will unintentionally show travel movements.
-
-        @param gcode_commands: List of gcode commands
-        """
-        segments = []
-
-        # Range of gcode commands allowing for indexing of next command.
-        gcode_commands_range = range(len(gcode_commands) - 2)
-
-        for gcode_command_index in tqdm(gcode_commands_range):
-            current_gcode_command = gcode_commands[gcode_command_index]
-            next_gcode_command = gcode_commands[gcode_command_index + 1]
-
-            segment = {
-                "X": [],
-                "Y": [],
-                "Z": [],
-                "E": [],
-                "angle_xy": 0.0,
-                "distance_xy": 0.0,
-                "travel": False,
-            }
-
-            # Adds start of segment
-            for key, value in current_gcode_command.items():
-                segment[key].append(value)
-
-            # Adds end of segment
-            for key, value in next_gcode_command.items():
-                segment[key].append(value)
-
-                # Marks segments with next gcode command without extrude values
-                # as travel movements.
-                if key == "E" and value <= 0.0:
-                    segment["travel"] = True
-
-            # Calculates lateral distance between two points.
-            segment["distance_xy"] = math.sqrt(
-                (segment["X"][1] - segment["X"][0]) ** 2
-                + (segment["Y"][1] - segment["Y"][0]) ** 2
-            )
-
-            # Determines angle to reach given is translated to origin.
-            translated_x = segment["X"][1] - segment["X"][0]
-            translated_y = segment["Y"][1] - segment["Y"][0]
-            segment["angle_xy"] = math.atan2(translated_y, translated_x)
-
-            segments.append(segment)
-
-        return segments
-
     # TODO: Call these subsegments.
     def convert_gcode_commands_to_segments(
             self,
-            gcode_commands,
+            gcode_commands = None,
             max_distance_xy = 1.0, # units are relative to GCode file.
 
             # TODO: Move this to be a more classwide setting.
@@ -164,6 +110,9 @@ class SegmenterGCode:
 
         @param gcode_commands: List of gcode commands
         """
+        if gcode_commands is None:
+            gcode_commands = self.gcode_commands
+
         segments = []
 
         # Range of gcode commands allowing for indexing of next command.
@@ -254,5 +203,59 @@ class SegmenterGCode:
                 prev_x = next_x
                 prev_y = next_y
                 prev_angle_xy = next_angle_xy
+
+        return segments
+
+    def convert_gcode_commands_to_segments_old(self, gcode_commands):
+        """
+        Parses list of gcode commands to segments of x, y, z, and e since
+        plotting all will unintentionally show travel movements.
+
+        @param gcode_commands: List of gcode commands
+        """
+        segments = []
+
+        # Range of gcode commands allowing for indexing of next command.
+        gcode_commands_range = range(len(gcode_commands) - 2)
+
+        for gcode_command_index in tqdm(gcode_commands_range):
+            current_gcode_command = gcode_commands[gcode_command_index]
+            next_gcode_command = gcode_commands[gcode_command_index + 1]
+
+            segment = {
+                "X": [],
+                "Y": [],
+                "Z": [],
+                "E": [],
+                "angle_xy": 0.0,
+                "distance_xy": 0.0,
+                "travel": False,
+            }
+
+            # Adds start of segment
+            for key, value in current_gcode_command.items():
+                segment[key].append(value)
+
+            # Adds end of segment
+            for key, value in next_gcode_command.items():
+                segment[key].append(value)
+
+                # Marks segments with next gcode command without extrude values
+                # as travel movements.
+                if key == "E" and value <= 0.0:
+                    segment["travel"] = True
+
+            # Calculates lateral distance between two points.
+            segment["distance_xy"] = math.sqrt(
+                (segment["X"][1] - segment["X"][0]) ** 2
+                + (segment["Y"][1] - segment["Y"][0]) ** 2
+            )
+
+            # Determines angle to reach given is translated to origin.
+            translated_x = segment["X"][1] - segment["X"][0]
+            translated_y = segment["Y"][1] - segment["Y"][0]
+            segment["angle_xy"] = math.atan2(translated_y, translated_x)
+
+            segments.append(segment)
 
         return segments

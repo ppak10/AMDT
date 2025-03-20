@@ -1,5 +1,0 @@
-recursive-include amdt/data *.ini
-recursive-include amdt/data *.pkl
-recursive-include amdt/data *.gcode
-recursive-include amdt/data *.STL
-recursive-include amdt/data *.py

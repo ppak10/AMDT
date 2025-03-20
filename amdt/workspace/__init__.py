@@ -1,6 +1,22 @@
 from .base import WorkspaceBase
+from .segmenter.gcode import WorkspaceSegmenterGCode
+from .segmenter.utils import WorkspaceSegmenterUtils
+from .simulation.base import WorkspaceSimulationBase
+from .simulation.utils import WorkspaceSimulationUtils
+from .solver.base import WorkspaceSolverBase
+from .solver.utils import WorkspaceSolverUtils
+from .utils import WorkspaceUtils
 
-class Workspace(WorkspaceBase):
+class Workspace(
+    WorkspaceBase,
+    WorkspaceSegmenterGCode,
+    WorkspaceSegmenterUtils,
+    WorkspaceSimulationBase,
+    WorkspaceSimulationUtils,
+    WorkspaceSolverBase,
+    WorkspaceSolverUtils,
+    WorkspaceUtils
+):
     def __init__(
             self,
             name: str = None,

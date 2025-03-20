@@ -181,7 +181,7 @@ class SolverModels:
             prediction = self.model_cache[(self.power, self.velocity)]
         elif p > 0:
             # Otherwise load model and generate inference.
-            model_path = files(data).joinpath("model", "ss316.pkl")
+            model_path = files(data).joinpath("solver", "model", "ss316.pkl")
             model_weights = torch.load(model_path)
             model = Generator3d(**MODEL_KWARGS)
             model.load_state_dict(model_weights)

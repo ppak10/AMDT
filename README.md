@@ -3,10 +3,43 @@
 # Additive Manufacturing Digital Twin (AMDT)
 
 ## Getting Started
-- Install local package with:
-  ```bash
-  pip install -e .
-  ```
+1. Installation
+```bash
+pip install amdt
+```
+
+2. Create a new `Workspace`:
+```bash
+amdt create_workspace test
+```
+
+3. Navigate to workspace directory and `manage.py` file
+```
+python manage.py
+```
+
+4. Drop `.gcode` file in `parts` folder within workspace directory.
+
+5. Select and parse `.gcode` file within `parts` folder with.
+```
+python manage.py parse_gcode
+```
+
+6. Create solver.
+```
+python manage.py create_solver model="eagar-tsai" name="eagar-tsai" device="cuda:0"
+```
+
+7. Create simulation .
+```
+python manage.py create_simulation
+```
+
+8. Run simulation .
+```
+python manage.py run_simulation layer_index="99"
+```
+
 
 ## Citations
 

@@ -17,7 +17,7 @@ class SolverUtils:
         """
 
         config = configparser.ConfigParser()
-        config_file_path = os.path.join(config_dir, config_file)
+        config_file_path = os.path.join("solver", config_dir, config_file)
         config_resource = files(data).joinpath(config_file_path)
         config.read(config_resource)
         output = {}
