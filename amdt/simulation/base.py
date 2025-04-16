@@ -41,6 +41,7 @@ class SimulationBase:
             solver,
             layer_index,
             out_dir="timesteps",
+            save_compressed=False,
             **kwargs
         ):
         if not os.path.isdir(out_dir):
@@ -78,6 +79,10 @@ class SimulationBase:
                 # write to disk as often.
                 temperatures = solver.temperatures.cpu()
                 filename = f"{index}".zfill(max_digits)
-                file_path = os.path.join(out_dir, f"{filename}.pt.gz")
-                with gzip.open(file_path, "wb") as f:
-                    torch.save(temperatures, f)
+                if save_compressed:
+                    file_path = os.path.join(out_dir, f"{filename}.pt.gz")
+                    with gzip.open(file_path, "wb") as f:
+                        torch.save(temperatures, f)
+                else:
+                    file_path = os.path.join(out_dir, f"{filename}.pt")
+                    torch.save(temperatures, file_path)

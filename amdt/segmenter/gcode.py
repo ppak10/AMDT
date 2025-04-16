@@ -51,6 +51,9 @@ class SegmenterGCode:
 
                 gcodes = line.block.gcodes  # GCode objects within line text.
 
+                if self.verbose:
+                    print(gcodes)
+
                 # Only considers Linear Move GCode actions for now.
                 if len(gcodes) and isinstance(gcodes[0], GCodeLinearMove):
 

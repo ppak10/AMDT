@@ -7,7 +7,8 @@ from importlib.resources import files
 from scipy import integrate
 
 # Small non-zero value for integration and other purposes
-FLOOR = 10**-7
+FLOOR = 10**-3 # Float16
+# FLOOR = 10**-7 # Float32
 
 class SolverModels:
     """
@@ -194,18 +195,20 @@ class SolverModels:
 
             x = prep_x([p, v, model_timestep]).unsqueeze(0).to(self.device)
             output = model(x)
-            output = output
+
+            # TODO: Implement varying downsampling based on mesh size
+            # output = output
             output_size = (
                 output.shape[2] // 10,
                 output.shape[3] // 10,
                 output.shape[4] // 10,
             )
-            print(output.shape, output_size)
+            # print(output.shape, output_size)
 
             # Downsample from 10 micron scale to 100 micron scale
             downsampled = F.adaptive_avg_pool3d(output, output_size=output_size)
-
             # downsampled = output
+
             normalized = t_0 + (t_max-t_0) * downsampled
             prediction = normalized.squeeze()
 
